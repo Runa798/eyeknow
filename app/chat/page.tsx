@@ -13,14 +13,21 @@ const modelOptions = [
 export default function ChatPage() {
   const [modelId, setModelId] = useState('grok-fast');
   const [input, setInput] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
 
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status, error } = useChat({
+    onError: (err) => {
+      console.error('[EyeKnow Client] Chat error:', err);
+      setErrorMsg(err.message || 'Unknown error');
+    },
+  });
 
   const isLoading = status === 'streaming' || status === 'submitted';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+    setErrorMsg('');
     const text = input;
     setInput('');
     sendMessage(
@@ -49,10 +56,19 @@ export default function ChatPage() {
             <option key={m.id} value={m.id}>{m.name}</option>
           ))}
         </select>
+        <span className="text-xs text-gray-400">Status: {status}</span>
       </div>
 
+      {(errorMsg || error) && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+          <p className="font-medium">❌ 错误</p>
+          <p className="mt-1 font-mono text-xs break-all">{errorMsg || error?.message}</p>
+          <button onClick={() => setErrorMsg('')} className="mt-2 text-xs text-red-500 underline">关闭</button>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto space-y-4 pb-4">
-        {messages.length === 0 && (
+        {messages.length === 0 && !errorMsg && (
           <div className="text-center text-gray-400 mt-20">
             <p className="text-4xl mb-4">👓</p>
             <p>你好！我是 EyeKnow 配镜专家。</p>
