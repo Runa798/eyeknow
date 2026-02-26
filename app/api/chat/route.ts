@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     console.log(`[EyeKnow] Stream created in ${Date.now() - startTime}ms, returning response`);
 
-    return result.toTextStreamResponse();
+    return result.toUIMessageStreamResponse();
   } catch (error: unknown) {
     const err = error as Error & { cause?: unknown; code?: string; status?: number };
     console.error(`[EyeKnow] ERROR: model=${modelId}, baseURL=${modelConfig?.baseURL}`);
