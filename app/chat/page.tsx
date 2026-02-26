@@ -1,7 +1,9 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 const modelOptions = [
   { id: 'grok-fast', name: 'Grok 4.1 Fast' },
@@ -10,10 +12,15 @@ const modelOptions = [
   { id: 'gemini-flash', name: 'Gemini 3 Flash' },
 ];
 
+function stripThinkTags(text: string): string {
+  return text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+}
+
 export default function ChatPage() {
   const [modelId, setModelId] = useState('grok-fast');
   const [input, setInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const scrollRef = useRef<HTMLDivElement>(null);
 
   const { messages, sendMessage, status, error } = useChat({
     onError: (err) => {
@@ -23,6 +30,10 @@ export default function ChatPage() {
   });
 
   const isLoading = status === 'streaming' || status === 'submitted';
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+  }, [messages]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,10 +48,11 @@ export default function ChatPage() {
   };
 
   const getTextContent = (m: (typeof messages)[number]) => {
-    return m.parts
+    const raw = m.parts
       ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
       .map(p => p.text)
       .join('') || '';
+    return stripThinkTags(raw);
   };
 
   return (
@@ -56,7 +68,6 @@ export default function ChatPage() {
             <option key={m.id} value={m.id}>{m.name}</option>
           ))}
         </select>
-        <span className="text-xs text-gray-400">Status: {status}</span>
       </div>
 
       {(errorMsg || error) && (
@@ -67,7 +78,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      <div className="flex-1 overflow-y-auto space-y-4 pb-4">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && !errorMsg && (
           <div className="text-center text-gray-400 mt-20">
             <p className="text-4xl mb-4">👓</p>
@@ -75,18 +86,32 @@ export default function ChatPage() {
             <p className="text-sm mt-2">告诉我你的验光数据、用眼场景和预算，我来帮你选镜片。</p>
           </div>
         )}
-        {messages.map(m => (
-          <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
-              m.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border border-gray-200 text-gray-800'
-            }`}>
-              {getTextContent(m)}
+        {messages.map(m => {
+          const text = getTextContent(m);
+          if (!text && m.role === 'assistant') return null;
+          return (
+            <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+              <div className={`max-w-[85%] rounded-2xl px-4 py-3 text-sm ${
+                m.role === 'user'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-gray-200 text-gray-800'
+              }`}>
+                {m.role === 'user' ? (
+                  <span>{text}</span>
+                ) : (
+                  <div className="prose prose-sm prose-gray max-w-none prose-p:my-1 prose-ul:my-1 prose-ol:my-1 prose-li:my-0.5 prose-headings:my-2 prose-blockquote:my-2 prose-strong:text-gray-900">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
         {isLoading && messages.length > 0 && messages[messages.length - 1]?.role === 'user' && (
           <div className="flex justify-start">
-            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-400">思考中...</div>
+            <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-400 animate-pulse">
+              思考中...
+            </div>
           </div>
         )}
       </div>
