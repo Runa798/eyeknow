@@ -34,22 +34,22 @@ export const models: ModelConfig[] = [
     id: 'grok-fast',
     name: 'Grok 4.1 Fast',
     provider: 'openai-compatible',
-    baseURL: 'http://13.223.178.20:8000/v1',
+    baseURL: 'https://grok.heyerice33.win/v1',
     apiKey: 'Lk4FJKW870W0Eda7eUqdTDQ8xAM70lt5',
     modelId: 'grok-4.1-fast',
     supportsVision: true,
-    description: '快速响应（需 HTTPS 代理后可用）',
+    description: '快速响应，适合日常咨询',
   },
   {
     id: 'grok-expert',
     name: 'Grok 4.1 Expert',
     provider: 'openai-compatible',
-    baseURL: 'http://13.223.178.20:8000/v1',
+    baseURL: 'https://grok.heyerice33.win/v1',
     apiKey: 'Lk4FJKW870W0Eda7eUqdTDQ8xAM70lt5',
     modelId: 'grok-4.1-expert',
     supportsVision: true,
-    description: '深度分析（需 HTTPS 代理后可用）',
+    description: '深度分析，适合复杂处方解读',
   },
 ];
 
-export const defaultModelId = 'gemini-flash';
+export const defaultModelId = 'grok-fast';
