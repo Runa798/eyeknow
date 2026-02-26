@@ -1,4 +1,4 @@
-import { streamText } from 'ai';
+import { streamText, convertToModelMessages } from 'ai';
 import { createOpenAI } from '@ai-sdk/openai';
 import { models, defaultModelId } from '@/lib/models';
 import { systemPrompt } from '@/lib/prompts';
@@ -26,10 +26,12 @@ export async function POST(req: Request) {
 
     console.log(`[EyeKnow] Creating streamText with modelId=${modelConfig.modelId}...`);
 
+    const modelMessages = await convertToModelMessages(messages);
+
     const result = streamText({
       model: provider.chat(modelConfig.modelId),
       system: systemPrompt,
-      messages,
+      messages: modelMessages,
     });
 
     console.log(`[EyeKnow] Stream created in ${Date.now() - startTime}ms, returning response`);
