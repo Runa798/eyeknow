@@ -27,7 +27,7 @@ export async function POST(req: Request) {
     console.log(`[EyeKnow] Creating streamText with modelId=${modelConfig.modelId}...`);
 
     const result = streamText({
-      model: provider(modelConfig.modelId),
+      model: provider.chat(modelConfig.modelId),
       system: systemPrompt,
       messages,
     });
