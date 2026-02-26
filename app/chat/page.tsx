@@ -1,7 +1,7 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -21,6 +21,7 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const userScrolledUp = useRef(false);
 
   const { messages, sendMessage, status, error } = useChat({
     onError: (err) => {
@@ -31,9 +32,24 @@ export default function ChatPage() {
 
   const isLoading = status === 'streaming' || status === 'submitted';
 
+  const handleScroll = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    // 距离底部超过 80px 认为用户主动上滚
+    const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+    userScrolledUp.current = !atBottom;
+  }, []);
+
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    if (!userScrolledUp.current) {
+      scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
+    }
   }, [messages]);
+
+  // 用户发送新消息时重置滚动锁定
+  useEffect(() => {
+    userScrolledUp.current = false;
+  }, [messages.length]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -78,7 +94,7 @@ export default function ChatPage() {
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto space-y-4 pb-4">
+      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto space-y-4 pb-4">
         {messages.length === 0 && !errorMsg && (
           <div className="text-center text-gray-400 mt-20">
             <p className="text-4xl mb-4">👓</p>
